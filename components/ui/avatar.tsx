@@ -1,0 +1,1 @@
+export function Avatar({name,size=40}:{name:string;size?:number}){return <span className="grad grid shrink-0 place-items-center rounded-full font-semibold text-white ring-2 ring-white/20" style={{width:size,height:size,fontSize:size/2.4}} role="img" aria-label={name}>{name[0]}</span>}

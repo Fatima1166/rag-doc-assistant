@@ -1,0 +1,40 @@
+"use client"
+import {useEffect,useId,useState} from "react";import Link from "next/link";import {useRouter} from "next/navigation";import {motion,AnimatePresence} from "framer-motion";import {Eye,EyeOff,Sparkles} from "lucide-react";import {toast} from "sonner";import {API} from "@/lib/api";import {nextPath,startSession} from "@/lib/auth"
+import {Particles} from "@/components/ui/particles";import {ThemeToggle} from "@/components/theme-toggle"
+const TAGS=["Answers from your docs, with the sources to prove it.","Upload once. Ask anything.","No guessing. Only what your documents say."]
+const ORBS=[{s:120,l:"8%",t:"16%",d:7},{s:64,l:"64%",t:"12%",d:9},{s:170,l:"54%",t:"46%",d:8},{s:52,l:"14%",t:"58%",d:6},{s:88,l:"78%",t:"80%",d:10}]
+const WAVE="M0 40 Q100 0 200 40 T400 40 T600 40 T800 40 T1000 40 T1200 40 T1400 40 T1600 40 V80 H0Z"
+function Logo({light}:{light?:boolean}){return <Link href="/" className="flex items-center gap-2 text-lg font-semibold"><span className={`grid size-9 place-items-center rounded-xl ${light?"bg-white/20 backdrop-blur":"grad"}`}><Sparkles size={18} className="text-white"/></span>RAGDocs</Link>}
+export function AuthLayout({children,wave,split=true}:{children:React.ReactNode;wave?:boolean;split?:boolean}){
+ const [t,setT]=useState(0);useEffect(()=>{const i=setInterval(()=>setT(x=>(x+1)%TAGS.length),4000);return()=>clearInterval(i)},[])
+ const mask="radial-gradient(circle at center,#000 15%,transparent 75%)"
+ return <div className={split?"grid min-h-dvh lg:grid-cols-2":"min-h-dvh"}>
+  {split&&<aside className="grad relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col lg:justify-between">
+   <Particles/>
+   {wave?<>{[150,240,330].map((d,i)=><motion.div key={d} aria-hidden className="absolute left-1/2 top-1/2 rounded-full border border-white/25" style={{width:d,height:d,marginLeft:-d/2,marginTop:-d/2}} animate={{rotate:360}} transition={{duration:16+i*8,repeat:Infinity,ease:"linear"}}><span className="orb absolute -top-2 left-1/2 size-4 -translate-x-1/2"/></motion.div>)}
+    <motion.div aria-hidden className="absolute bottom-0 left-0 h-32 w-[200%] opacity-30" animate={{x:["0%","-50%"]}} transition={{duration:14,repeat:Infinity,ease:"linear"}}><svg viewBox="0 0 1600 80" preserveAspectRatio="none" className="size-full fill-white"><path d={WAVE}/></svg></motion.div></>
+   :ORBS.map((o,i)=><motion.span key={i} aria-hidden className="orb absolute" style={{width:o.s,height:o.s,left:o.l,top:o.t}} animate={{y:[0,-26,0],x:[0,10,0]}} transition={{duration:o.d,repeat:Infinity,ease:"easeInOut"}}/>)}
+   <div className="relative"><Logo light/></div>
+   <div className="relative"><AnimatePresence mode="wait"><motion.p key={t} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} transition={{duration:.4}} className="min-h-[7.5rem] max-w-sm text-3xl font-bold leading-tight">{TAGS[t]}</motion.p></AnimatePresence>
+    <div className="mt-4 flex gap-2" aria-hidden>{TAGS.map((_,i)=><span key={i} className={`h-1 rounded-full bg-white transition-all ${i===t?"w-8":"w-2 opacity-40"}`}/>)}</div></div></aside>}
+  <main id="main" className="relative grid min-h-dvh place-items-center overflow-hidden px-4 py-24 sm:px-6">
+   <div className="grid-bg absolute inset-0 opacity-70" style={{maskImage:mask,WebkitMaskImage:mask}} aria-hidden/>
+   <div className="blob -right-16 top-10 size-72 bg-purple-500" aria-hidden/><div className="blob -left-16 bottom-0 size-72 bg-cyan-500" style={{animationDelay:"4s"}} aria-hidden/>
+   <div className="absolute inset-x-4 top-4 flex items-center justify-between sm:inset-x-6"><span className={split?"lg:invisible":""}><Logo/></span><ThemeToggle/></div>
+   <motion.div initial={{opacity:0,y:28}} animate={{opacity:1,y:0}} transition={{duration:.5,ease:"easeOut"}} className="glass relative w-full max-w-md p-6 shadow-2xl shadow-purple-500/10 sm:p-8">{children}</motion.div></main></div>}
+export function Field({label,type="text",value,onChange,name,autoComplete,error,required=true}:{label:string;type?:string;value:string;onChange:(v:string)=>void;name?:string;autoComplete?:string;error?:string;required?:boolean}){
+ const id=useId();const [show,setShow]=useState(false);const pw=type==="password"
+ return <div><div className="relative"><input id={id} name={name} autoComplete={autoComplete} required={required} type={pw&&show?"text":type} value={value} onChange={e=>onChange(e.target.value)} placeholder=" " aria-invalid={!!error}
+   className={`peer w-full rounded-xl border bg-transparent px-3 pb-2 pt-5 outline-none transition focus:shadow-[0_0_0_3px_rgba(168,85,247,.25)] ${pw?"pr-11":""} ${error?"border-red-500":"border-[var(--line)] focus:border-purple-500"}`}/>
+  <label htmlFor={id} className="pointer-events-none absolute left-3 top-1.5 text-xs text-[var(--muted)] transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs">{label}</label>
+  {pw&&<button type="button" aria-label={show?"Hide password":"Show password"} onClick={()=>setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] transition hover:text-[var(--fg)]">{show?<EyeOff size={18}/>:<Eye size={18}/>}</button>}</div>
+  {error&&<p role="alert" className="mt-1 text-xs text-red-400">{error}</p>}</div>}
+export function GradBtn({loading,children}:{loading?:boolean;children:React.ReactNode}){
+ return <button disabled={loading} className="grad flex w-full items-center justify-center gap-2 rounded-xl py-3 font-medium text-white shadow-lg shadow-purple-500/25 transition hover:scale-[1.02] hover:shadow-purple-500/40 active:scale-[.98] disabled:opacity-70">{loading&&<span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white"/>}{children}</button>}
+const GOOGLE=<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+const GITHUB=<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.921.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+export function Social(){const r=useRouter();const go=(n:string)=>{if(API){location.href=`${API}/api/auth/oauth/${n.toLowerCase()}`;return}
+ startSession({name:`${n} user`,email:`${n.toLowerCase()}@example.com`});toast.success(`Signed in with ${n}`);setTimeout(()=>r.push(nextPath()),500)}
+ const cls="glass flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition hover:scale-[1.02] hover:border-purple-500/50 active:scale-[.98]"
+ return <><div className="my-5 flex items-center gap-3 text-xs text-[var(--muted)]"><hr className="flex-1 border-[var(--line)]"/>or continue with<hr className="flex-1 border-[var(--line)]"/></div>
+ <div className="grid grid-cols-2 gap-3"><button type="button" onClick={()=>go("Google")} className={cls}>{GOOGLE}Google</button><button type="button" onClick={()=>go("GitHub")} className={cls}>{GITHUB}GitHub</button></div></>}

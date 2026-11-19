@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
+:root{--bg:#f8f7fc;--fg:#14121f;--muted:#6b6880;--glass:rgba(255,255,255,.7);--line:rgba(120,100,200,.2)}
+.dark{--bg:#0a0912;--fg:#f1eefc;--muted:#9a96b3;--glass:rgba(255,255,255,.05);--line:rgba(255,255,255,.1)}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);min-height:100dvh;font-feature-settings:"cv11","ss01","calt";-webkit-font-smoothing:antialiased}
+@layer base{:focus-visible{outline:2px solid #a855f7;outline-offset:2px}}
+@layer components{
+.glass{background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-radius:1rem;box-shadow:0 8px 32px rgba(80,50,160,.08)}
+.grad{background:linear-gradient(135deg,#a855f7,#3b82f6,#06b6d4)}
+.grad-text{background-image:linear-gradient(90deg,#a855f7,#3b82f6,#06b6d4,#a855f7);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:flow 6s linear infinite}
+.blob{position:absolute;border-radius:9999px;filter:blur(90px);opacity:.4;animation:pulse-blob 9s ease-in-out infinite;pointer-events:none}
+.skeleton{background:linear-gradient(90deg,transparent,rgba(168,85,247,.18),transparent) var(--glass);background-size:200% 100%;animation:shimmer 1.4s infinite}
+.grid-bg{background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;-webkit-mask-image:radial-gradient(ellipse at top,#000 30%,transparent 70%);mask-image:radial-gradient(ellipse at top,#000 30%,transparent 70%)}
+.float{animation:float 4s ease-in-out infinite}
+.orb{border-radius:9999px;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.95),rgba(255,255,255,.3) 35%,rgba(255,255,255,.06) 72%);box-shadow:inset -8px -10px 24px rgba(0,0,0,.22),0 20px 40px rgba(0,0,0,.18)}
+}
+@keyframes flow{to{background-position:200% center}}
+@keyframes pulse-blob{50%{transform:scale(1.15);opacity:.65}}
+@keyframes shimmer{to{background-position:-200% 0}}
+@keyframes float{50%{transform:translateY(-10px)}}
+::selection{background:#a855f7;color:#fff}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#a855f7;border-radius:8px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

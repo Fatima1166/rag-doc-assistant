@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="mx-auto max-w-3xl space-y-4 p-6" aria-busy="true" aria-label="Loading"><div className="skeleton h-10 w-1/2 rounded-xl"/><div className="skeleton h-32 rounded-2xl"/><div className="skeleton h-32 rounded-2xl"/></main>}

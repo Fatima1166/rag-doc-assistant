@@ -1,0 +1,5 @@
+# RAGDocs backend. Build artifacts and local data stay out of git.
+data/
+__pycache__/
+*.pyc
+.env

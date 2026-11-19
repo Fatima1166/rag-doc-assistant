@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing & Coverage
+coverage/
+.pytest_cache/
+pytest-of-*/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files (never commit secrets)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Backend files & SQLite databases
+backend/.env
+backend/data/
+backend/.pytest_cache/
+backend/pytest-of-*/
+data/
+*.db
+*.sqlite
+*.sqlite3
+secret.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
