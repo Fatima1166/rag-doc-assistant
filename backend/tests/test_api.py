@@ -179,11 +179,11 @@ def test_oauth_callback_rejects_missing_or_bad_state(monkeypatch):
     monkeypatch.setenv("GITHUB_CLIENT_SECRET", "secret")
     # No state cookie at all.
     r = client.get("/api/auth/oauth/github/callback?code=x&state=y", follow_redirects=False)
-    assert r.status_code == 303 and "/login?oauth_error=1" in r.headers["location"]
+    assert r.status_code == 303 and "/?oauth_error=1" in r.headers["location"]
     # Cookie present but state mismatched.
     r = client.get("/api/auth/oauth/github/callback?code=x&state=y",
                    headers={"Cookie": "ragdocs_oauth_state=different"}, follow_redirects=False)
-    assert r.status_code == 303 and "/login?oauth_error=1" in r.headers["location"]
+    assert r.status_code == 303 and "/?oauth_error=1" in r.headers["location"]
 
 
 def test_email_verification_flow(monkeypatch):

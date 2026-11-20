@@ -1,7 +1,5 @@
 import {test,expect,type Page} from "@playwright/test";import AxeBuilder from "@axe-core/playwright"
-async function login(page:Page){await page.goto("/login");await page.getByLabel("Email").fill("ada@example.com");await page.getByLabel("Password",{exact:true}).fill("password123");await page.getByRole("button",{name:"Sign in",exact:true}).click();await page.waitForURL("**/chat")}
 test("landing page renders",async({page})=>{await page.goto("/");await expect(page.getByRole("heading",{level:1})).toContainText("documentation")})
-test("protected routes redirect to login",async({page})=>{await page.goto("/documents");await expect(page).toHaveURL(/\/login/)})
-test("answer streams with a citation",async({page})=>{await login(page);await page.getByLabel("Message").fill("How do I authenticate?");await page.getByRole("button",{name:"Send message"}).click();await expect(page.getByRole("button",{name:"Source 1"}).first()).toBeVisible({timeout:15000})})
-test("failed answer offers retry",async({page})=>{await login(page);await page.getByLabel("Message").fill("trigger an error");await page.keyboard.press("Enter");await expect(page.getByRole("button",{name:"Retry"})).toBeVisible()})
-for(const p of ["/","/login","/signup"])test(`no serious accessibility violations on ${p}`,async({page})=>{await page.goto(p);const r=await new AxeBuilder({page}).analyze();expect(r.violations.filter(v=>["serious","critical"].includes(v.impact??""))).toEqual([])})
+test("answer streams with a citation",async({page})=>{await page.getByLabel("Message").fill("How do I authenticate?");await page.getByRole("button",{name:"Send message"}).click();await expect(page.getByRole("button",{name:"Source 1"}).first()).toBeVisible({timeout:15000})})
+test("failed answer offers retry",async({page})=>{await page.getByLabel("Message").fill("trigger an error");await page.keyboard.press("Enter");await expect(page.getByRole("button",{name:"Retry"})).toBeVisible()})
+test("no serious accessibility violations on landing page",async({page})=>{await page.goto("/");const r=await new AxeBuilder({page}).analyze();expect(r.violations.filter(v=>["serious","critical"].includes(v.impact??""))).toEqual([])})

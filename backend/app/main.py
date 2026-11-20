@@ -398,7 +398,7 @@ def oauth_start(provider: str, request: Request):
 @app.get("/api/auth/oauth/{provider}/callback")
 def oauth_callback(provider: str, request: Request, code: str = "", state: str = ""):
     front = s.frontend_origin.rstrip("/")
-    fail = RedirectResponse(f"{front}/login?oauth_error=1", status_code=303)
+    fail = RedirectResponse(f"{front}/?oauth_error=1", status_code=303)
     fail.delete_cookie(oauth.STATE_COOKIE, path="/")
     stored = request.cookies.get(oauth.STATE_COOKIE, "")
     if not code or not stored or not hmac.compare_digest(stored, state):

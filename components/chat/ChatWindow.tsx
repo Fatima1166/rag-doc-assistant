@@ -2,7 +2,7 @@
 import {useCallback,useEffect,useRef,useState} from "react";import Link from "next/link";import {toast} from "sonner";import {ArrowDown,Download,ExternalLink,Menu} from "lucide-react"
 import {useChat,uid} from "@/lib/store";import {useDocs} from "@/lib/docs";import {API,streamChat} from "@/lib/api";import {useUser} from "@/lib/auth";import type {Source} from "@/lib/types"
 import {MobileSidebar} from "@/components/layout/Sidebar";import {Dialog} from "@/components/ui/dialog";import {Tip} from "@/components/ui/tooltip"
-import {MessageBubble} from "./MessageBubble";import {ChatInput} from "./ChatInput";import {EmptyState} from "./EmptyState";import {ScopePicker} from "./ScopePicker";import {Onboarding} from "./Onboarding"
+import {MessageBubble} from "./MessageBubble";import {ChatInput} from "./ChatInput";import {EmptyState} from "./EmptyState";import {ScopePicker} from "./ScopePicker"
 export function ChatWindow(){
  const {convs,activeId,newChat,addMsg,patchMsg,truncateFrom,setScope}=useChat();const docs=useDocs(s=>s.docs);const conv=convs.find(c=>c.id===activeId)
  const [mounted,setMounted]=useState(false);const [busy,setBusy]=useState(false);const [drawer,setDrawer]=useState(false);const [src,setSrc]=useState<Source|null>(null);const [atBottom,setAtBottom]=useState(true);const [pendingScope,setPendingScope]=useState<string[]|undefined>()
@@ -43,6 +43,6 @@ export function ChatWindow(){
      onFeedback={v=>{patchMsg(conv.id,m.id,{feedback:m.feedback===v?undefined:v});if(m.feedback!==v)toast("Thanks for the feedback")}}/>)}</div>}</div>
    {!atBottom&&<button aria-label="Scroll to latest message" onClick={toBottom} className="glass absolute bottom-4 left-1/2 grid size-10 -translate-x-1/2 place-items-center shadow-lg transition hover:scale-110"><ArrowDown size={18}/></button>}</main>
   <footer className="p-4"><ChatInput onSend={send} onStop={()=>ctl.current?.abort()} busy={busy}/><p className="mt-2 text-center text-xs text-[var(--muted)]">Answers come only from your indexed documents.</p></footer>
-  <MobileSidebar open={drawer} onClose={()=>setDrawer(false)}/><Onboarding/>
+  <MobileSidebar open={drawer} onClose={()=>setDrawer(false)}/>
   <Dialog open={!!src} onClose={()=>setSrc(null)} title={src?`${src.title}${src.page?` · page ${src.page}`:""}`:""}><blockquote className="border-l-2 border-purple-500 pl-3 text-sm text-[var(--muted)]">{src?.snippet}</blockquote>
    {src?.url.startsWith("http")?<a href={src.url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1 text-sm text-purple-400 underline">Open original source <ExternalLink size={14}/></a>:<Link href="/documents" onClick={()=>setSrc(null)} className="mt-4 inline-flex items-center gap-1 text-sm text-purple-400 underline">View in Documents</Link>}</Dialog></section>}
