@@ -1,5 +1,5 @@
 "use client"
-import {useEffect,useMemo,useState} from "react";import {usePathname,useRouter} from "next/navigation";import {useTheme} from "next-themes";import {Home,MessageSquare,FileText,Settings,Plus,Moon,Search,TextSearch,Loader2,XCircle} from "lucide-react";import {useQuery} from "@tanstack/react-query"
+import {useEffect,useMemo,useState} from "react";import {usePathname,useRouter} from "next/navigation";import {useTheme} from "next-themes";import {Home,MessageSquare,FileText,Plus,Moon,Search,TextSearch,Loader2,XCircle} from "lucide-react";import {useQuery} from "@tanstack/react-query"
 import {Dialog} from "@/components/ui/dialog";import {useChat} from "@/lib/store";import {API,searchDocs} from "@/lib/api";import {around} from "@/lib/utils"
 export function CommandPalette(){
  const path=usePathname();const r=useRouter();const {resolvedTheme,setTheme}=useTheme();const {convs,newChat,setActive}=useChat()
@@ -9,7 +9,7 @@ export function CommandPalette(){
  // Debounced so a full-text search isn't fired on every keystroke.
  useEffect(()=>{if(!open||!q.trim()){setDq("");return}const t=setTimeout(()=>setDq(q.trim()),300);return()=>clearTimeout(t)},[q,open])
  const items=useMemo(()=>{const go=(h:string)=>()=>r.push(h);const dark=resolvedTheme==="dark"
-  const all:{l:string;I:any;f:()=>void;sub?:string}[]=[{l:"New chat",I:Plus,f:()=>{newChat();r.push("/chat")}},{l:"Go to Chat",I:MessageSquare,f:go("/chat")},{l:"Go to Documents",I:FileText,f:go("/documents")},{l:"Go to Settings",I:Settings,f:go("/settings")},{l:"Go to Home",I:Home,f:go("/")},{l:`Switch to ${dark?"light":"dark"} theme`,I:Moon,f:()=>setTheme(dark?"light":"dark")},
+  const all:{l:string;I:any;f:()=>void;sub?:string}[]=[{l:"New chat",I:Plus,f:()=>{newChat();r.push("/chat")}},{l:"Go to Chat",I:MessageSquare,f:go("/chat")},{l:"Go to Documents",I:FileText,f:go("/documents")},{l:"Go to Home",I:Home,f:go("/")},{l:`Switch to ${dark?"light":"dark"} theme`,I:Moon,f:()=>setTheme(dark?"light":"dark")},
    ...(API&&dq.length>=2?[{l:`Search document text for “${dq}”`,I:TextSearch,sub:"Full text",f:go(`/documents?q=${encodeURIComponent(dq)}`)}]:[]),
    ...convs.map(c=>({l:c.title,I:MessageSquare,sub:"Conversation",f:()=>{setActive(c.id);r.push("/chat")}}))]
   return all.filter(x=>x.l.toLowerCase().includes(q.toLowerCase())).slice(0,9)},[q,dq,convs,resolvedTheme,r,newChat,setActive,setTheme])
@@ -19,7 +19,7 @@ export function CommandPalette(){
  const shown=useMemo(()=>{const m=new Map<string,{id:string;name:string;snippet:string}>()
   for(const h of hits.data??[]){if(m.has(h.doc_id))continue;m.set(h.doc_id,{id:h.doc_id,name:h.doc_name,snippet:around(h.text,dq)})}
   return [...m.values()].slice(0,4)},[hits.data,dq])
- if(!["/chat","/documents","/settings"].some(p=>path.startsWith(p)))return null
+ if(!["/chat","/documents"].some(p=>path.startsWith(p)))return null
  return <Dialog open={open} onClose={close} title="Command palette" bare>
   <div className="flex items-center gap-2 border-b border-[var(--line)] px-4"><Search size={16} className="text-[var(--muted)]"/>
    <input data-autofocus value={q} onChange={e=>setQ(e.target.value)} role="combobox" aria-expanded="true" aria-controls="palette-list" aria-label="Search chats, commands or document text" placeholder="Search chats, commands or document text…" className="w-full bg-transparent py-3 outline-none"
