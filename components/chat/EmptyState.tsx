@@ -1,36 +1,29 @@
 "use client"
 import Link from "next/link"
-import {Sparkles,Upload} from "lucide-react"
-import {motion} from "framer-motion"
-import {useDocs} from "@/lib/docs"
+import { Upload } from "lucide-react"
+import { motion } from "framer-motion"
+import { useDocs } from "@/lib/docs"
+import { LogoMark } from "@/components/ui/logo"
 
-export function EmptyState({onPick}:{onPick:(q:string)=>void}){
-  const docs=useDocs(s=>s.docs)
-  const hasReadyDocs=docs.some(d=>d.status==="ready")
-
+export function EmptyState({ onPick }: { onPick: (q: string) => void }) {
+  const ready = useDocs((s) => s.docs).filter((d) => d.status === "ready")
   return (
-    <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} className="mx-auto mt-8 max-w-xl text-center sm:mt-16">
-      <span className="grad float mx-auto mb-4 grid size-16 place-items-center rounded-2xl shadow-lg shadow-purple-500/40">
-        <Sparkles size={30} className="text-white"/>
-      </span>
-      <h2 className="grad-text text-4xl font-bold">Ask me anything</h2>
-      <p className="mt-2 text-[var(--muted)]">Answers come directly from your indexed documents.</p>
-
-      {hasReadyDocs ? (
-        <div className="glass mt-8 p-6 text-sm text-[var(--muted)]">
-          <p>Type your question in the box below to chat with your documents.</p>
-        </div>
-      ) : (
-        <div className="glass mt-8 p-6">
-          <p className="text-sm text-[var(--muted)]">You don&apos;t have any indexed documents yet.</p>
-          <div className="mt-4 flex justify-center">
-            <Link
-              href="/documents"
-              className="grad inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-purple-500/25 transition hover:scale-105 active:scale-95"
-            >
-              <Upload size={16}/>Upload documents
-            </Link>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mx-auto mt-10 max-w-xl text-center sm:mt-20">
+      <span className="mx-auto inline-block"><LogoMark size={46} /></span>
+      <h2 className="mt-5 font-serif text-4xl font-semibold leading-tight tracking-tight">What would you like to <span className="marker italic">find</span>?</h2>
+      {ready.length ? (
+        <>
+          <p className="mt-3 text-muted">Searching {ready.length} document{ready.length === 1 ? "" : "s"}. Every answer comes with the page it was read from.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {["Summarize the main points", "What are the key requirements?", "List any deadlines or limits"].map((q) => (
+              <button key={q} onClick={() => onPick(q)} className="btn btn-quiet !rounded-full !py-1.5 text-muted hover:text-ink">{q}</button>
+            ))}
           </div>
+        </>
+      ) : (
+        <div className="card mt-8 p-6">
+          <p className="text-sm text-muted">There's nothing to search yet. Add a document and ask away.</p>
+          <Link href="/documents" className="btn btn-primary mt-4"><Upload size={16} />Add documents</Link>
         </div>
       )}
     </motion.div>

@@ -105,6 +105,8 @@ def build_sources(chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "snippet": _truncate(_safe(c.get("text", "")), 360),
             "url": c.get("url") or "",
         }
+        if c.get("doc_id"):
+            src["doc_id"] = str(c["doc_id"])  # lets the UI open the cited document
         if c.get("page"):
             src["page"] = int(c["page"])
         if c.get("page_end") and int(c["page_end"]) != int(c.get("page") or 0):

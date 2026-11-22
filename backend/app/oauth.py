@@ -59,6 +59,11 @@ def _provider(name: str) -> Dict[str, str]:
     return p
 
 
+def configured() -> Dict[str, bool]:
+    """Which providers have both a client id and secret (safe to show in the UI)."""
+    return {n: bool(c["client_id"] and c["secret"]) for n, c in _configs().items()}
+
+
 def start(name: str, redirect_uri: str) -> Tuple[str, str]:
     """Return (provider authorize URL, state)."""
     p = _provider(name)
@@ -106,17 +111,33 @@ def exchange(name: str, code: str, redirect_uri: str) -> str:
 
 
 def fetch_identity(name: str, access_token: str) -> Dict[str, str]:
-    """Access token -> {email, name}. Email is mandatory (it links accounts)."""
+    """Access token -> {email, name, avatar}.
+
+    A *verified* email is mandatory: it is what links a social login to an
+    existing account, so an unverified address would be an account-takeover hole.
+    """
     p = _provider(name)
     info = _get_json(p["userinfo"], access_token)
-    email = (info.get("email") or "").strip().lower()
-    if name == "github" and not email:
-        # Public profile may hide the email; fall back to the emails API.
-        for e in _get_json("https://api.github.com/user/emails", access_token):
-            if e.get("primary") and e.get("verified"):
-                email = (e.get("email") or "").strip().lower()
-                break
+    email = ""
+    if name == "google":
+        flag = info.get("email_verified")
+        if flag is True or str(flag).lower() == "true":
+            email = (info.get("email") or "").strip().lower()
+        avatar = info.get("picture") or ""
+    else:  # github
+        try:
+            for e in _get_json("https://api.github.com/user/emails", access_token):
+                if e.get("primary") and e.get("verified"):
+                    email = (e.get("email") or "").strip().lower()
+                    break
+        except OAuthError:
+            email = ""
+        if not email:
+            # GitHub only lets verified addresses be made public.
+            email = (info.get("email") or "").strip().lower()
+        avatar = info.get("avatar_url") or ""
     if not email:
         raise OAuthError("provider account has no verified email")
     display = info.get("name") or info.get("login") or email.split("@")[0]
-    return {"email": email, "name": (display or email.split("@")[0])[:80]}
+    avatar = avatar if isinstance(avatar, str) and avatar.startswith("https://") else ""
+    return {"email": email, "name": (display or email.split("@")[0])[:80], "avatar": avatar[:400]}

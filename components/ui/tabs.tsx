@@ -1,5 +1,22 @@
 "use client"
-export function Tabs<T extends string>({value,onChange,items,label}:{value:T;onChange:(v:T)=>void;items:{id:T;label:string;count?:number}[];label:string}){
- const move=(d:number)=>{const i=items.findIndex(x=>x.id===value);const n=items[(i+d+items.length)%items.length].id;onChange(n);requestAnimationFrame(()=>document.getElementById(`tab-${n}`)?.focus())}
- return <div role="tablist" aria-label={label} onKeyDown={e=>{if(e.key==="ArrowRight"){e.preventDefault();move(1)}else if(e.key==="ArrowLeft"){e.preventDefault();move(-1)}}} className="glass inline-flex max-w-full gap-1 overflow-x-auto p-1">
-  {items.map(i=><button key={i.id} id={`tab-${i.id}`} role="tab" aria-selected={value===i.id} tabIndex={value===i.id?0:-1} onClick={()=>onChange(i.id)} className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition ${value===i.id?"grad text-white shadow":"text-[var(--muted)] hover:text-[var(--fg)]"}`}>{i.label}{i.count!==undefined&&<span className="ml-1.5 text-xs opacity-75">{i.count}</span>}</button>)}</div>}
+export function Tabs<T extends string>({ value, onChange, items, label }: { value: T; onChange: (v: T) => void; items: { id: T; label: string; count?: number }[]; label: string }) {
+  const move = (d: number) => {
+    const i = items.findIndex((x) => x.id === value)
+    const n = items[(i + d + items.length) % items.length].id
+    onChange(n)
+    requestAnimationFrame(() => document.getElementById(`tab-${n}`)?.focus())
+  }
+  return (
+    <div role="tablist" aria-label={label}
+      onKeyDown={(e) => { if (e.key === "ArrowRight") { e.preventDefault(); move(1) } else if (e.key === "ArrowLeft") { e.preventDefault(); move(-1) } }}
+      className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-rule bg-sunken p-1">
+      {items.map((i) => (
+        <button key={i.id} id={`tab-${i.id}`} role="tab" aria-selected={value === i.id} tabIndex={value === i.id ? 0 : -1} onClick={() => onChange(i.id)}
+          className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition ${value === i.id ? "bg-card font-medium text-ink shadow-sm" : "text-muted hover:text-ink"}`}>
+          {i.label}
+          {i.count !== undefined && <span className="ml-1.5 font-mono text-xs opacity-70">{i.count}</span>}
+        </button>
+      ))}
+    </div>
+  )
+}

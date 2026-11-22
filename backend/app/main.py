@@ -138,7 +138,7 @@ def to_public(d: Dict[str, Any]) -> Dict[str, Any]:
 
 def _public_user(u: Dict[str, Any]) -> Dict[str, Any]:
     return {"id": u["id"], "name": u["name"], "email": u["email"],
-            "verified": bool(u.get("verified"))}
+            "verified": bool(u.get("verified")), "avatar": u.get("avatar") or ""}
 
 
 MAX_TAGS = 8
@@ -382,6 +382,12 @@ def _oauth_redirect_uri(request: Request, provider: str) -> str:
     return f"{base}/api/auth/oauth/{provider}/callback"
 
 
+@app.get("/api/auth/providers")
+def oauth_providers():
+    """Which social sign-ins this server is actually configured for."""
+    return oauth.configured()
+
+
 @app.get("/api/auth/oauth/{provider}")
 def oauth_start(provider: str, request: Request):
     try:
@@ -396,25 +402,41 @@ def oauth_start(provider: str, request: Request):
 
 
 @app.get("/api/auth/oauth/{provider}/callback")
-def oauth_callback(provider: str, request: Request, code: str = "", state: str = ""):
+def oauth_callback(provider: str, request: Request, code: str = "", state: str = "", error: str = ""):
     front = s.frontend_origin.rstrip("/")
-    fail = RedirectResponse(f"{front}/?oauth_error=1", status_code=303)
-    fail.delete_cookie(oauth.STATE_COOKIE, path="/")
+
+    def fail(reason: str) -> RedirectResponse:
+        r = RedirectResponse(f"{front}/?oauth_error=1&reason={reason}", status_code=303)
+        r.delete_cookie(oauth.STATE_COOKIE, path="/")
+        return r
+
     stored = request.cookies.get(oauth.STATE_COOKIE, "")
-    if not code or not stored or not hmac.compare_digest(stored, state):
-        return fail  # tampered/missing state, or provider refused the flow
+    if error:
+        return fail("denied")  # the person pressed Cancel at the provider
+    if not code or not stored or not hmac.compare_digest(stored.encode(), state.encode()):
+        return fail("state")  # tampered/missing state, or provider refused the flow
     try:
         access = oauth.exchange(provider, code, _oauth_redirect_uri(request, provider))
         ident = oauth.fetch_identity(provider, access)
-    except oauth.OAuthError:
-        return fail
+    except oauth.OAuthError as e:
+        return fail("email" if "verified email" in str(e) else "provider")
     # Same email as an existing password account -> link, never duplicate.
     user = db.get_user_by_email(ident["email"])
     if not user:
         uid = uuid.uuid4().hex
         # OAuth guarantees the provider already owns this email -> mark verified.
-        db.create_user(uid, ident["email"], ident["name"], "", verified=True)
-        user = db.get_user(uid)
+        db.create_user(uid, ident["email"], ident["name"], "", verified=True, avatar=ident["avatar"])
+    else:
+        uid = user["id"]
+        if not user.get("verified"):
+            # The provider has just proved who owns this address. A password set earlier was
+            # chosen by someone who never proved it, so it must stop working (and with it
+            # every session issued from it, since tokens carry the password version).
+            db.update_password(uid, "")
+            db.update_user(uid, verified=True)
+        if ident["avatar"] and ident["avatar"] != (user.get("avatar") or ""):
+            db.update_user(uid, avatar=ident["avatar"])
+    user = db.get_user(uid)
     ok = RedirectResponse(f"{front}/auth/callback#token={issue_token(user)}", status_code=303)
     ok.delete_cookie(oauth.STATE_COOKIE, path="/")
     return ok

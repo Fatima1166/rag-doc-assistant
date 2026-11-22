@@ -21,11 +21,11 @@ const auth=():Record<string,string>=>{const t=getToken();return t?{Authorization
 
 const SEP="\n[[SOURCES]]"
 export class Unauthorized extends Error{constructor(){super("Not authenticated");this.name="Unauthorized"}}
-async function ok(r:Response){if(r.status===401){setToken(null);throw new Unauthorized()}if(!r.ok){let m=`Request failed (${r.status})`;try{const d=(await r.json()).detail;if(typeof d==="string")m=d}catch{}throw new Error(m)}return r}
+async function ok(r:Response){if(r.status===401){setToken(null);if(typeof window!=="undefined")window.dispatchEvent(new Event("ragdocs-unauthorized"));throw new Unauthorized()}if(!r.ok){let m=`Request failed (${r.status})`;try{const d=(await r.json()).detail;if(typeof d==="string")m=d}catch{}throw new Error(m)}return r}
 const json=(body:unknown,withAuth=true)=>({method:"POST",headers:{"Content-Type":"application/json",...(withAuth?auth():{})},body:JSON.stringify(body)})
 
 /* ---------------------------------- auth ---------------------------------- */
-export type PublicUser={id:string;name:string;email:string;verified:boolean;reverified?:boolean}
+export type PublicUser={id:string;name:string;email:string;verified:boolean;reverified?:boolean;avatar?:string}
 async function authPost(path:string,body:unknown){const r=await ok(await fetch(`${API}${path}`,json(body,false)));return r.json()}
 export async function signup(name:string,email:string,password:string,remember=false):Promise<PublicUser>{const j=await authPost("/api/auth/signup",{name,email,password});setToken(j.token,remember);return j.user}
 export async function login(email:string,password:string,remember=false):Promise<PublicUser>{const j=await authPost("/api/auth/login",{email,password});setToken(j.token,remember);return j.user}
@@ -49,6 +49,12 @@ export async function exportAccount():Promise<unknown>{const r=await ok(await fe
 /** Irreversible. The backend refuses without the current password. */
 export async function deleteAccount(password:string){await ok(await fetch(`${API}/api/me`,{method:"DELETE",headers:{"Content-Type":"application/json",...auth()},body:JSON.stringify({password})}))}
 export function logout(){setToken(null)}
+
+/** Which social sign-ins the server has credentials for (so the UI never offers a dead button). */
+export type Providers={google:boolean;github:boolean}
+export async function getProviders():Promise<Providers>{const r=await fetch(`${API}/api/auth/providers`,{cache:"no-store"});if(!r.ok)throw new Error(`Server answered ${r.status}`);return r.json()}
+/** The stored original. Needs the Bearer token, so it can't be a plain <a href>: fetch it, then use a blob URL. */
+export async function fetchDocFile(id:string):Promise<Blob>{const r=await ok(await fetch(`${API}/api/documents/${id}/download`,{headers:auth()}));return r.blob()}
 
 /* ------------------------------ server health ----------------------------- */
 export type Health={ok:boolean;chunks:number;model:string;llm:string;auth_required:boolean;stats:{total_documents:number;ready_documents:number;total_chunks:number;total_size_bytes:number}}

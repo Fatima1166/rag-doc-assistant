@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users(
   verified INTEGER NOT NULL DEFAULT 0,
   prefs TEXT NOT NULL DEFAULT '{}',
   keys TEXT NOT NULL DEFAULT '{}',
+  avatar TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS documents(
@@ -152,6 +153,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if ucols and "keys" not in ucols:
         # Keys used to live in one shared data/keys.json; see keys.adopt_legacy_keys().
         conn.execute("ALTER TABLE users ADD COLUMN keys TEXT NOT NULL DEFAULT '{}'")
+    if ucols and "avatar" not in ucols:
+        conn.execute("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT ''")
 
 
 def now_iso() -> str:
@@ -341,11 +344,12 @@ def get_stats(user_id: Optional[str] = None) -> Dict[str, Any]:
 
 # --------------------------------- users ----------------------------------
 
-def create_user(user_id: str, email: str, name: str, pw_hash: str, verified: bool = False) -> None:
+def create_user(user_id: str, email: str, name: str, pw_hash: str, verified: bool = False,
+                avatar: str = "") -> None:
     with db() as conn:
         conn.execute(
-            "INSERT INTO users(id,email,name,pw,verified,created_at) VALUES(?,?,?,?,?,?)",
-            (user_id, email.lower().strip(), name, pw_hash, 1 if verified else 0, now_iso()),
+            "INSERT INTO users(id,email,name,pw,verified,avatar,created_at) VALUES(?,?,?,?,?,?,?)",
+            (user_id, email.lower().strip(), name, pw_hash, 1 if verified else 0, avatar or "", now_iso()),
         )
 
 
@@ -362,7 +366,7 @@ def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
 
 
 def update_user(user_id: str, name: Optional[str] = None, email: Optional[str] = None,
-                verified: Optional[bool] = None) -> None:
+                verified: Optional[bool] = None, avatar: Optional[str] = None) -> None:
     """Patch only the fields that were supplied."""
     fields: Dict[str, Any] = {}
     if name is not None:
@@ -371,6 +375,8 @@ def update_user(user_id: str, name: Optional[str] = None, email: Optional[str] =
         fields["email"] = email.lower().strip()
     if verified is not None:
         fields["verified"] = 1 if verified else 0
+    if avatar is not None:
+        fields["avatar"] = avatar
     if not fields:
         return
     cols = ", ".join(f"{k}=?" for k in fields)
