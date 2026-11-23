@@ -1,4 +1,4 @@
-﻿# OAuth Setup Guide (Google & GitHub)
+# OAuth Setup Guide (Google & GitHub)
 
 Configure Google and GitHub social authentication for RAGDocs.
 
